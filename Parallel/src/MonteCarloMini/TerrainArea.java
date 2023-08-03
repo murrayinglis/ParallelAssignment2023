@@ -4,14 +4,6 @@ import java.lang.Math.*;
 
 public class TerrainArea {
 
-	enum Direction {
-		STAY_HERE,
-	    LEFT,
-	    RIGHT,
-	    UP,
-	    DOWN
-	}
-	
 	public static final int PRECISION = 10000;
 
 	private int rows, columns; //grid size
@@ -21,6 +13,13 @@ public class TerrainArea {
 	private int grid_points_visited;
 	private int grid_points_evaluated;
     
+	enum Direction {
+		STAY_HERE,
+	    LEFT,
+	    RIGHT,
+	    UP,
+	    DOWN
+	  }
 	
 	public TerrainArea(int rows, int columns, double xmin, double xmax, double ymin, double ymax) {
 		super();

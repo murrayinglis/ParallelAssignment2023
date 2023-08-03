@@ -1,11 +1,11 @@
 package MonteCarloMini;
 
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
 import java.util.Random;
 import java.lang.Math;
 
-public class MonteCarloMinimizationParallel extends RecursiveAction{
+public class MonteCarloMinimizationParallel extends RecursiveTask<Integer[]>{
 
     static final boolean DEBUG=false;
 	
@@ -66,7 +66,9 @@ public class MonteCarloMinimizationParallel extends RecursiveAction{
 
         // Starting parallel task
         ForkJoinPool fjPool = new ForkJoinPool();
-        int min = fjPool.invoke(new MonteCarloMinimizationParallel(0,num_searches,terrain));
+        Integer[] ansArray = fjPool.invoke(new MonteCarloMinimizationParallel(0,num_searches,terrain,searches));
+		int min = ansArray[0];
+		int finder = ansArray[1];
 
         //end timer
    		tock();
@@ -90,6 +92,8 @@ public class MonteCarloMinimizationParallel extends RecursiveAction{
 		System.out.printf("Grid points evaluated: %d  (%2.0f%s)\n",tmp,(tmp/(rows*columns*1.0))*100.0, "%");
 	
 		/* Results*/
+		//System.out.println(min);
+		//System.out.println(finder);
 		System.out.printf("Global minimum: %d at x=%.1f y=%.1f\n\n", min, terrain.getXcoord(searches[finder].getPos_row()), terrain.getYcoord(searches[finder].getPos_col()) );
     }
 
@@ -97,14 +101,13 @@ public class MonteCarloMinimizationParallel extends RecursiveAction{
     // Parallel stuff
     int min=Integer.MAX_VALUE;
     int local_min=Integer.MAX_VALUE;
-    int finder =-1;
 
     int lo;
     int hi;
     TerrainArea terrain;
 	Search [] searches;
 
-    static final int SEQUENTIAL_CUTOFF = 50;
+    static final int SEQUENTIAL_CUTOFF = 5000;
     
     public MonteCarloMinimizationParallel(int lo, int hi, TerrainArea terrain, Search[] searches)
     {
@@ -114,7 +117,9 @@ public class MonteCarloMinimizationParallel extends RecursiveAction{
 		this.searches = searches;
     }
 
-    protected Integer compute() {
+	@Override
+    protected Integer[] compute() {
+		int finder = -1;
         if ((hi-lo) < SEQUENTIAL_CUTOFF)
         {
 			for  (int i=lo; i<hi; i++) {
@@ -124,6 +129,8 @@ public class MonteCarloMinimizationParallel extends RecursiveAction{
 					finder=i; //keep track of who found it
 				}	
 				if(DEBUG) System.out.println("Search "+searches[i].getID()+" finished at  "+local_min + " in " +searches[i].getSteps());
+				Integer[] returnArray = {min,finder};
+				return returnArray;
 			}
         }
         else
@@ -132,9 +139,20 @@ public class MonteCarloMinimizationParallel extends RecursiveAction{
             MonteCarloMinimizationParallel right = new MonteCarloMinimizationParallel((hi+lo)/2,hi,terrain,searches);
             //TODO: this
             left.fork();
-            int rightAns = right.compute();
-            int leftAns = left.join();
-            return Math.min(rightAns,leftAns);
+            Integer[] rightAns = right.compute();
+            Integer[] leftAns = left.join();
+			Integer[] returnArray = new Integer[2];
+			returnArray[0] = Math.min(rightAns[0],leftAns[0]);
+			if (rightAns[0] < leftAns[0])
+			{
+				returnArray[1] = rightAns[1];
+			}
+			else{
+				returnArray[1] = leftAns[1];
+			}
+            return returnArray;
         }
+	Integer[] returnArray = {0,0};
+	return returnArray;
     }
 }

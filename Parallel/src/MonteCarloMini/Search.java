@@ -1,5 +1,7 @@
 package MonteCarloMini;
 
+import MonteCarloMini.TerrainArea.Direction;
+
 /* M. Kuttel 2023
  * Searcher class that lands somewhere random on the surfaces and 
  * then moves downhill, stopping at the local minimum.
@@ -12,13 +14,6 @@ public class Search {
 	private boolean stopped;			// Did the search hit a previous trail?
 	
 	private TerrainArea terrain;
-	enum Direction {
-		STAY_HERE,
-	    LEFT,
-	    RIGHT,
-	    UP,
-	    DOWN
-	  }
 
 	public Search(int id, int pos_row, int pos_col, TerrainArea terrain) {
 		this.id = id;
