@@ -5,7 +5,7 @@ import java.util.concurrent.RecursiveTask;
 import java.util.Random;
 import java.lang.Math;
 
-public class MonteCarloMinimizationParallel extends RecursiveTask<Integer[]>{
+public class MonteCarloMinimizationParallel extends RecursiveTask<Integer>{
 
     static final boolean DEBUG=false;
 	
@@ -66,9 +66,7 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer[]>{
 
         // Starting parallel task
         ForkJoinPool fjPool = new ForkJoinPool();
-        Integer[] ansArray = fjPool.invoke(new MonteCarloMinimizationParallel(0,num_searches,terrain,searches));
-		int min = ansArray[0];
-		int finder = ansArray[1];
+        Integer min = fjPool.invoke(new MonteCarloMinimizationParallel(0,num_searches,terrain,searches));
 
         //end timer
    		tock();
@@ -101,13 +99,14 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer[]>{
     // Parallel stuff
     int min=Integer.MAX_VALUE;
     int local_min=Integer.MAX_VALUE;
+	static int finder = -1;
 
     int lo;
     int hi;
     TerrainArea terrain;
 	Search [] searches;
 
-    static final int SEQUENTIAL_CUTOFF = 5000;
+    static final int SEQUENTIAL_CUTOFF = 100000;
     
     public MonteCarloMinimizationParallel(int lo, int hi, TerrainArea terrain, Search[] searches)
     {
@@ -118,8 +117,7 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer[]>{
     }
 
 	@Override
-    protected Integer[] compute() {
-		int finder = -1;
+    protected Integer compute() {
         if ((hi-lo) < SEQUENTIAL_CUTOFF)
         {
 			for  (int i=lo; i<hi; i++) {
@@ -129,30 +127,19 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer[]>{
 					finder=i; //keep track of who found it
 				}	
 				if(DEBUG) System.out.println("Search "+searches[i].getID()+" finished at  "+local_min + " in " +searches[i].getSteps());
-				Integer[] returnArray = {min,finder};
-				return returnArray;
+				return min;
 			}
         }
         else
         {
             MonteCarloMinimizationParallel left = new MonteCarloMinimizationParallel(lo,(hi+lo)/2,terrain,searches);
             MonteCarloMinimizationParallel right = new MonteCarloMinimizationParallel((hi+lo)/2,hi,terrain,searches);
-            //TODO: this
+            
             left.fork();
-            Integer[] rightAns = right.compute();
-            Integer[] leftAns = left.join();
-			Integer[] returnArray = new Integer[2];
-			returnArray[0] = Math.min(rightAns[0],leftAns[0]);
-			if (rightAns[0] < leftAns[0])
-			{
-				returnArray[1] = rightAns[1];
-			}
-			else{
-				returnArray[1] = leftAns[1];
-			}
-            return returnArray;
+            Integer rightAns = right.compute();
+            Integer leftAns = left.join();
+			return Math.min(rightAns,leftAns);
         }
-	Integer[] returnArray = {0,0};
-	return returnArray;
+	return 0;
     }
 }
