@@ -117,7 +117,7 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
     TerrainArea terrain;
 	Search [] searches;
 
-    static final int SEQUENTIAL_CUTOFF = 10000;
+    static final int SEQUENTIAL_CUTOFF = 50000;
     
     public MonteCarloMinimizationParallel(int lo, int hi, TerrainArea terrain, Search[] searches)
     {

@@ -2,8 +2,8 @@ JAVAC=/usr/bin/javac
 JAVA=/usr/bin/java
 .SUFFIXES: .java .class
 
-SRCDIR=src/MonteCarloMini
-BINDIR=bin
+SRCDIR=Parallel/src/MonteCarloMini
+BINDIR=Parallel/bin
 
 $(BINDIR)/MonteCarloMini/%.class: $(SRCDIR)/%.java 
 	$(JAVAC) -d $(BINDIR) -cp $(BINDIR) -sourcepath $(SRCDIR) $<
@@ -15,6 +15,7 @@ default: $(CLASS_FILES)
 clean:
 	rm $(BINDIR)/MonteCarloMini/*.class
 run: $(CLASS_FILES)
-	java -cp $(BINDIR) MonteCarloMini/MonteCarloMinimizationParallel 500 500 -4 60 -20 30 0.7
+	java -cp $(BINDIR) MonteCarloMini/MonteCarloMinimizationParallel 600 600 -4 60 -20 30 0.7
+	java -cp Serial/bin MonteCarloMini/MonteCarloMinimization 600 600 -4 60 -20 30 0.7
 javadoc:
 	javadoc -d docs -cp $(BINDIR) -sourcepath src/ MonteCarloMini
