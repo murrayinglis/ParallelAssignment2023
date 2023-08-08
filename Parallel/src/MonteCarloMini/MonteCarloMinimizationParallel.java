@@ -5,7 +5,17 @@ import java.util.concurrent.RecursiveTask;
 import java.util.Random;
 import java.lang.Math;
 
-public class MonteCarloMinimizationParallel extends RecursiveTask<Integer>{
+class LocalMin {
+	int finder;
+	int min;
+	public LocalMin(int finder, int min)
+	{
+		this.finder=finder;
+		this.min=min;
+	}
+} 
+
+public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
 
     static final boolean DEBUG=false;
 	
@@ -66,7 +76,9 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer>{
 
         // Starting parallel task
         ForkJoinPool fjPool = new ForkJoinPool();
-        Integer min = fjPool.invoke(new MonteCarloMinimizationParallel(0,num_searches,terrain,searches));
+        LocalMin localMin = fjPool.invoke(new MonteCarloMinimizationParallel(0,num_searches,terrain,searches));
+		int min = localMin.min;
+		int finder = localMin.finder;
 
         //end timer
    		tock();
@@ -99,14 +111,14 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer>{
     // Parallel stuff
     int min=Integer.MAX_VALUE;
     int local_min=Integer.MAX_VALUE;
-	static int finder = -1;
 
     int lo;
     int hi;
     TerrainArea terrain;
 	Search [] searches;
+	static int finder = -1;
 
-    static final int SEQUENTIAL_CUTOFF = 100000;
+    static final int SEQUENTIAL_CUTOFF = 10000;
     
     public MonteCarloMinimizationParallel(int lo, int hi, TerrainArea terrain, Search[] searches)
     {
@@ -117,7 +129,8 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer>{
     }
 
 	@Override
-    protected Integer compute() {
+    protected LocalMin compute() {
+		int finder = 0;
         if ((hi-lo) < SEQUENTIAL_CUTOFF)
         {
 			for  (int i=lo; i<hi; i++) {
@@ -127,8 +140,8 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer>{
 					finder=i; //keep track of who found it
 				}	
 				if(DEBUG) System.out.println("Search "+searches[i].getID()+" finished at  "+local_min + " in " +searches[i].getSteps());
-				return min;
 			}
+			return new LocalMin(finder,min);
         }
         else
         {
@@ -136,10 +149,10 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<Integer>{
             MonteCarloMinimizationParallel right = new MonteCarloMinimizationParallel((hi+lo)/2,hi,terrain,searches);
             
             left.fork();
-            Integer rightAns = right.compute();
-            Integer leftAns = left.join();
-			return Math.min(rightAns,leftAns);
+            LocalMin rightAns = right.compute();
+            LocalMin leftAns = left.join();
+			if (rightAns.min < leftAns.min) {return rightAns;}
+			else {return leftAns;}
         }
-	return 0;
     }
 }

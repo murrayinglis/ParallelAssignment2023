@@ -65,7 +65,7 @@ public class TerrainArea {
 		/*double tmp = y_coord-Math.pow(x_coord,2);
 		tmp=100.0*Math.pow(tmp,2);
 		double tmp2=Math.pow(1-x_coord,2);
-		double value = tmp2+tmp; */
+		double value = tmp2+tmp;*/
 	
 		/* Transform to fixed point precision */
 		int fixed_point = (int)( PRECISION * value );
