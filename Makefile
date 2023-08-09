@@ -15,7 +15,7 @@ default: $(CLASS_FILES)
 clean:
 	rm $(BINDIR)/MonteCarloMini/*.class
 run: $(CLASS_FILES)
-	java -cp $(BINDIR) MonteCarloMini/MonteCarloMinimizationParallel 600 600 -4 60 -20 30 0.7
-	java -cp Serial/bin MonteCarloMini/MonteCarloMinimization 600 600 -4 60 -20 30 0.7
+	java -cp Serial/bin MonteCarloMini/MonteCarloMinimization 600 600 -10 10 -50 50 0.5
+	java -cp $(BINDIR) MonteCarloMini/MonteCarloMinimizationParallel 600 600 -10 10 -50 50 0.5
 javadoc:
 	javadoc -d docs -cp $(BINDIR) -sourcepath src/ MonteCarloMini

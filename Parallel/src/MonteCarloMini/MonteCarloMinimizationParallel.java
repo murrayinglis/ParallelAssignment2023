@@ -71,17 +71,23 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
     		System.out.printf("\n");
     	}
 
-    	//start timer
-    	tick();
 
-        // Starting parallel task
+
+        // Creating thread pool
         ForkJoinPool fjPool = new ForkJoinPool();
+
+		//start timer
+		tick();
+
         LocalMin localMin = fjPool.invoke(new MonteCarloMinimizationParallel(0,num_searches,terrain,searches));
+
+		//end timer
+		tock();
+
 		int min = localMin.min;
 		int finder = localMin.finder;
 
-        //end timer
-   		tock();
+       
 
         if(DEBUG) {
     		/* print final state */
@@ -93,6 +99,7 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
 		System.out.printf("\t Rows: %d, Columns: %d\n", rows, columns);
 		System.out.printf("\t x: [%f, %f], y: [%f, %f]\n", xmin, xmax, ymin, ymax );
 		System.out.printf("\t Search density: %f (%d searches)\n", searches_density,num_searches );
+		System.out.printf("\t Sequential cutoff: %d \n", SEQUENTIAL_CUTOFF );
 
 		/*  Total computation time */
 		System.out.printf("Time: %d ms\n",endTime - startTime );
@@ -117,7 +124,7 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
     TerrainArea terrain;
 	Search [] searches;
 
-    static final int SEQUENTIAL_CUTOFF = 50000;
+    static final int SEQUENTIAL_CUTOFF = 300;
     
     public MonteCarloMinimizationParallel(int lo, int hi, TerrainArea terrain, Search[] searches)
     {
