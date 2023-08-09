@@ -8,10 +8,12 @@ package MonteCarloMini;
  * developed by Arturo Gonzalez Escribano  (Universidad de Valladolid 2021/2022)
  */
 import java.util.Random;
+import java.io.FileWriter;
+import java.io.IOException;
 
 class MonteCarloMinimization{
 
-	static final boolean DEBUG=true;
+	static final boolean DEBUG=false;
 	
 	static long startTime = 0;
 	static long endTime = 0;
@@ -92,22 +94,17 @@ class MonteCarloMinimization{
     		terrain.print_heights();
     		terrain.print_visited();
     	}
-    	
-		System.out.printf("Run parameters\n");
-		System.out.printf("\t Rows: %d, Columns: %d\n", rows, columns);
-		System.out.printf("\t x: [%f, %f], y: [%f, %f]\n", xmin, xmax, ymin, ymax );
-		System.out.printf("\t Search density: %f (%d searches)\n", searches_density,num_searches );
-
-		/*  Total computation time */
-		System.out.printf("Time: %d ms\n",endTime - startTime );
-		int tmp=terrain.getGrid_points_visited();
-		System.out.printf("Grid points visited: %d  (%2.0f%s)\n",tmp,(tmp/(rows*columns*1.0))*100.0, "%");
-		tmp=terrain.getGrid_points_evaluated();
-		System.out.printf("Grid points evaluated: %d  (%2.0f%s)\n",tmp,(tmp/(rows*columns*1.0))*100.0, "%");
-	
-		/* Results*/
-		System.out.printf("Global minimum: %d at x=%.1f y=%.1f\n\n", min, terrain.getXcoord(searches[finder].getPos_row()), terrain.getYcoord(searches[finder].getPos_col()) );
-				
-    	
+		
+		
+    	try {
+			FileWriter fileWriter = new FileWriter("Parallel/data/varyingSearchesSerial.txt", true);
+			String fstring = String.format("%d %d %f %f %f %f %f %d %d %d %f %f\n", rows, columns, xmin, xmax, ymin, ymax, searches_density, num_searches, endTime-startTime, min, terrain.getXcoord(searches[finder].getPos_row()), terrain.getYcoord(searches[finder].getPos_col()));
+			fileWriter.append(fstring);
+			fileWriter.close();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
     }
 }
