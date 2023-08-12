@@ -5,6 +5,7 @@ import java.util.concurrent.RecursiveTask;
 import java.util.Random;
 import java.lang.Math;
 
+// Class for returning the minimum value and the index of the Search object 
 class LocalMin {
 	int finder;
 	int min;
@@ -18,6 +19,16 @@ class LocalMin {
 public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
 
     static final boolean DEBUG=false;
+
+	int min=Integer.MAX_VALUE;
+    int local_min=Integer.MAX_VALUE;
+
+    int lo;
+    int hi;
+    TerrainArea terrain;
+	SearchParallel [] searches;
+
+    static final int SEQUENTIAL_CUTOFF = 300;
 	
 	static long startTime = 0;
 	static long endTime = 0;
@@ -29,8 +40,44 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
 	private static void tock(){
 		endTime=System.currentTimeMillis(); 
 	}
-	
+    
+    public MonteCarloMinimizationParallel(int lo, int hi, TerrainArea terrain, SearchParallel[] searches)
+    {
+        this.lo = lo;
+        this.hi = hi;
+        this.terrain = terrain;
+		this.searches = searches;
+    }
 
+	@Override
+    protected LocalMin compute() {
+		int finder = 0;
+        if ((hi-lo) < SEQUENTIAL_CUTOFF) // Sequential algorithm for when size is less than the cutoff
+        {
+			for  (int i=lo; i<hi; i++) {
+				local_min=searches[i].find_valleys();
+				if((!searches[i].isStopped())&&(local_min<min)) { //don't look at  those who stopped because hit exisiting path
+					min=local_min;
+					finder=i; //keep track of who found it
+				}	
+				if(DEBUG) System.out.println("Search "+searches[i].getID()+" finished at  "+local_min + " in " +searches[i].getSteps());
+			}
+			return new LocalMin(finder,min);
+        }
+        else // If size is greater than the cutoff, fork
+        {
+            MonteCarloMinimizationParallel left = new MonteCarloMinimizationParallel(lo,(hi+lo)/2,terrain,searches);
+            MonteCarloMinimizationParallel right = new MonteCarloMinimizationParallel((hi+lo)/2,hi,terrain,searches);
+            
+            left.fork();
+            LocalMin rightAns = right.compute();
+            LocalMin leftAns = left.join();
+			if (rightAns.min < leftAns.min) {return rightAns;}
+			else {return leftAns;}
+        }
+    }
+
+	// Main method
     public static void main(String[] args)  {
 
         int rows, columns; //grid size
@@ -39,7 +86,7 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
         double searches_density;	// Density - number of Monte Carlo  searches per grid position - usually less than 1!
     
         int num_searches;		// Number of searches
-        Search [] searches;		// Array of searches
+        SearchParallel [] searches;		// Array of searches
     
     	Random rand = new Random();  //the random number generator
     	
@@ -59,9 +106,9 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
     	// Initialize 
     	terrain = new TerrainArea(rows, columns, xmin,xmax,ymin,ymax);
     	num_searches = (int)( rows * columns * searches_density );
-    	searches= new Search [num_searches];
+    	searches= new SearchParallel [num_searches];
     	for (int i=0;i<num_searches;i++) 
-    		searches[i]=new Search(i+1, rand.nextInt(rows),rand.nextInt(columns),terrain);
+    		searches[i]=new SearchParallel(i+1, rand.nextInt(rows),rand.nextInt(columns),terrain);
 
         if(DEBUG) {
     		/* Print arguments */
@@ -109,56 +156,6 @@ public class MonteCarloMinimizationParallel extends RecursiveTask<LocalMin>{
 		System.out.printf("Grid points evaluated: %d  (%2.0f%s)\n",tmp,(tmp/(rows*columns*1.0))*100.0, "%");
 	
 		/* Results*/
-		//System.out.println(min);
-		//System.out.println(finder);
 		System.out.printf("Global minimum: %d at x=%.1f y=%.1f\n\n", min, terrain.getXcoord(searches[finder].getPos_row()), terrain.getYcoord(searches[finder].getPos_col()) );
-    }
-
-
-    // Parallel stuff
-    int min=Integer.MAX_VALUE;
-    int local_min=Integer.MAX_VALUE;
-
-    int lo;
-    int hi;
-    TerrainArea terrain;
-	Search [] searches;
-
-    static final int SEQUENTIAL_CUTOFF = 300;
-    
-    public MonteCarloMinimizationParallel(int lo, int hi, TerrainArea terrain, Search[] searches)
-    {
-        this.lo = lo;
-        this.hi = hi;
-        this.terrain = terrain;
-		this.searches = searches;
-    }
-
-	@Override
-    protected LocalMin compute() {
-		int finder = 0;
-        if ((hi-lo) < SEQUENTIAL_CUTOFF)
-        {
-			for  (int i=lo; i<hi; i++) {
-				local_min=searches[i].find_valleys();
-				if((!searches[i].isStopped())&&(local_min<min)) { //don't look at  those who stopped because hit exisiting path
-					min=local_min;
-					finder=i; //keep track of who found it
-				}	
-				if(DEBUG) System.out.println("Search "+searches[i].getID()+" finished at  "+local_min + " in " +searches[i].getSteps());
-			}
-			return new LocalMin(finder,min);
-        }
-        else
-        {
-            MonteCarloMinimizationParallel left = new MonteCarloMinimizationParallel(lo,(hi+lo)/2,terrain,searches);
-            MonteCarloMinimizationParallel right = new MonteCarloMinimizationParallel((hi+lo)/2,hi,terrain,searches);
-            
-            left.fork();
-            LocalMin rightAns = right.compute();
-            LocalMin leftAns = left.join();
-			if (rightAns.min < leftAns.min) {return rightAns;}
-			else {return leftAns;}
-        }
     }
 }

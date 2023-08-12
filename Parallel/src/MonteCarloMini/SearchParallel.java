@@ -7,7 +7,7 @@ import MonteCarloMini.TerrainArea.Direction;
  * then moves downhill, stopping at the local minimum.
  */
 
-public class Search {
+public class SearchParallel {
 	private int id;				// Searcher identifier
 	private int pos_row, pos_col;		// Position in the grid
 	private int steps; //number of steps to end of search
@@ -15,7 +15,7 @@ public class Search {
 	
 	private TerrainArea terrain;
 
-	public Search(int id, int pos_row, int pos_col, TerrainArea terrain) {
+	public SearchParallel(int id, int pos_row, int pos_col, TerrainArea terrain) {
 		this.id = id;
 		this.pos_row = pos_row; //randomly allocated
 		this.pos_col = pos_col; //randomly allocated
